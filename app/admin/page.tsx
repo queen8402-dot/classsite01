@@ -5,19 +5,21 @@ import { ArrowLeft, EyeOff } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { isAdmin, isAdminPasswordSet } from "@/lib/admin-auth";
 import { getAdminClient } from "@/lib/supabase-admin";
+import { getHeroText } from "@/lib/data";
 import type { Item } from "@/lib/types";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { logout } from "./actions";
 import { LoginForm } from "./_components/login-form";
 import { ItemForm } from "./_components/item-form";
+import { HeroForm } from "./_components/hero-form";
 import { DeleteButton } from "./_components/delete-button";
 
 /* 관리자 페이지 (주소: /admin)
    1) 비밀번호가 설정 안 됐으면 → 설정 안내
    2) 로그인 안 했으면 → 로그인 화면
    3) Supabase 연결 안 됐으면 → 연결 안내
-   4) 모두 준비됐으면 → 섹션별 카드(항목) 관리 */
+   4) 모두 준비됐으면 → 히어로 문구 수정 / 섹션별 카드(항목) 관리 */
 
 export const metadata = { title: "관리자" };
 
@@ -75,18 +77,11 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
   const sections = siteConfig.adminSections;
   const requested = typeof searchParams.section === "string" ? searchParams.section : undefined;
+  const isHeroTab = requested === "hero";
   const current = sections.find((s) => s.key === requested) ?? sections[0];
 
-  const { data, error } = await supabase
-    .from("items")
-    .select("*")
-    .eq("section", current.key)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-  const items = (data ?? []) as Item[];
-
-  return (
-    <Container className="py-10">
+  const topBar = (
+    <>
       {/* 상단 바 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -104,14 +99,53 @@ export default async function AdminPage(props: PageProps<"/admin">) {
         </form>
       </div>
 
-      {/* 섹션 탭 (site.config.ts 의 adminSections) */}
+      {/* 탭: 히어로 문구 + site.config.ts 의 adminSections */}
       <nav className="mt-8 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant={isHeroTab ? "default" : "outline"}>
+          <Link href="/admin?section=hero">히어로 문구</Link>
+        </Button>
         {sections.map((s) => (
-          <Button key={s.key} asChild size="sm" variant={s.key === current.key ? "default" : "outline"}>
+          <Button
+            key={s.key}
+            asChild
+            size="sm"
+            variant={!isHeroTab && s.key === current.key ? "default" : "outline"}
+          >
             <Link href={`/admin?section=${s.key}`}>{s.label}</Link>
           </Button>
         ))}
       </nav>
+    </>
+  );
+
+  /* 히어로 문구 탭 */
+  if (isHeroTab) {
+    const heroText = await getHeroText();
+    return (
+      <Container className="py-10">
+        {topBar}
+        <section className="mt-8 max-w-2xl rounded-xl border p-6">
+          <h2 className="text-lg font-semibold">히어로 문구</h2>
+          <p className="mb-5 mt-1 text-sm text-muted-foreground">
+            사이트 첫 화면의 글자입니다. 칸을 비워 두고 저장하면 기본 글자(site.config.ts)가 보여요.
+          </p>
+          <HeroForm text={heroText} />
+        </section>
+      </Container>
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .eq("section", current.key)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  const items = (data ?? []) as Item[];
+
+  return (
+    <Container className="py-10">
+      {topBar}
 
       {error ? (
         <p className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive">

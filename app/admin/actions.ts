@@ -3,6 +3,7 @@
 /* 관리자 페이지의 버튼들이 실제로 하는 일 (서버에서 실행됨)
    - login / logout      : 로그인, 로그아웃
    - saveItem            : 카드 추가 또는 수정 (이미지 업로드 포함)
+   - saveHeroText        : 히어로(첫 화면) 글자 저장
    - deleteItem          : 카드 삭제 */
 
 import { revalidatePath } from "next/cache";
@@ -11,6 +12,7 @@ import { redirect } from "next/navigation";
 import { siteConfig } from "@/site.config";
 import { checkPassword, endAdminSession, isAdmin, startAdminSession } from "@/lib/admin-auth";
 import { getAdminClient, IMAGE_BUCKET } from "@/lib/supabase-admin";
+import type { HeroText } from "@/lib/types";
 
 export type ActionState = { ok?: boolean; message?: string };
 
@@ -90,6 +92,39 @@ export async function saveItem(_prev: ActionState, formData: FormData): Promise<
   revalidatePath("/");
   revalidatePath("/admin");
   return { ok: true, message: id ? "수정했습니다." : "추가했습니다." };
+}
+
+/* ---------- 히어로 글자 저장 ---------- */
+
+export async function saveHeroText(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return { message: "로그인이 필요합니다. 새로고침 후 다시 로그인하세요." };
+
+  const supabase = getAdminClient();
+  if (!supabase) return { message: "Supabase가 연결되지 않았습니다. .env.local 을 확인하세요." };
+
+  const read = (name: string) => String(formData.get(name) ?? "").replace(/\r\n/g, "\n").trim();
+  const data: HeroText = {
+    eyebrow: read("eyebrow"),
+    title: read("title"),
+    description: read("description"),
+    primaryLabel: read("primaryLabel"),
+    secondaryLabel: read("secondaryLabel"),
+  };
+  if (!data.title) return { message: "큰 제목을 입력하세요." };
+
+  const { error } = await supabase
+    .from("site_content")
+    .upsert({ key: "hero", data, updated_at: new Date().toISOString() });
+
+  if (error) {
+    return {
+      message: `저장 실패: ${error.message} (supabase/schema.sql 을 SQL Editor 에서 다시 실행했는지 확인하세요)`,
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { ok: true, message: "저장했습니다. 사이트 첫 화면에 반영됐어요." };
 }
 
 /* ---------- 카드 삭제 ---------- */

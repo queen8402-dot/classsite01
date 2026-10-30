@@ -3,7 +3,8 @@
 /* 관리자 페이지의 버튼들이 실제로 하는 일 (서버에서 실행됨)
    - login / logout      : 로그인, 로그아웃
    - saveItem            : 카드 추가 또는 수정 (이미지 업로드 포함)
-   - saveHeroText        : 히어로(첫 화면) 글자 저장
+   - saveHeroText        : (예전 화면용) 히어로 글자 저장
+   - saveDailyText       : 데일리 학습 첫 화면 글자·과목 링크 저장
    - deleteItem          : 카드 삭제 */
 
 import { revalidatePath } from "next/cache";
@@ -12,7 +13,7 @@ import { redirect } from "next/navigation";
 import { siteConfig } from "@/site.config";
 import { checkPassword, endAdminSession, isAdmin, startAdminSession } from "@/lib/admin-auth";
 import { getAdminClient, IMAGE_BUCKET } from "@/lib/supabase-admin";
-import type { HeroText } from "@/lib/types";
+import type { DailyText, HeroText, SubjectCard } from "@/lib/types";
 
 export type ActionState = { ok?: boolean; message?: string };
 
@@ -119,6 +120,54 @@ export async function saveHeroText(_prev: ActionState, formData: FormData): Prom
   if (error) {
     return {
       message: `저장 실패: ${error.message} (supabase/schema.sql 을 SQL Editor 에서 다시 실행했는지 확인하세요)`,
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { ok: true, message: "저장했습니다. 사이트 첫 화면에 반영됐어요." };
+}
+
+/* ---------- 첫 화면(데일리 학습) 글자 저장 ---------- */
+
+export async function saveDailyText(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await isAdmin())) return { message: "로그인이 필요합니다. 새로고침 후 다시 로그인하세요." };
+
+  const supabase = getAdminClient();
+  if (!supabase) return { message: "Supabase가 연결되지 않았습니다. .env.local 을 확인하세요." };
+
+  const read = (name: string) => String(formData.get(name) ?? "").trim();
+  const subjects: SubjectCard[] = siteConfig.daily.subjects.map((_, i) => ({
+    label: read(`subject-${i}-label`),
+    caption: read(`subject-${i}-caption`),
+    emoji: read(`subject-${i}-emoji`),
+    href: read(`subject-${i}-href`),
+  }));
+
+  // 링크는 http:// 또는 https:// 로 시작하는 주소만 허용 (이상한 코드가 들어가지 않게)
+  const badLink = subjects.find((s) => s.href && !/^https?:\/\//i.test(s.href));
+  if (badLink) {
+    return { message: `${badLink.label || "과목"} 링크는 https:// 로 시작하는 주소로 넣어 주세요.` };
+  }
+
+  const data: DailyText = {
+    studentName: read("studentName"),
+    studentGrade: read("studentGrade"),
+    studentAvatar: read("studentAvatar"),
+    subjectsTitle: read("subjectsTitle"),
+    subjects,
+    titleBefore: read("titleBefore"),
+    titleHighlight: read("titleHighlight"),
+    titleAfter: read("titleAfter"),
+  };
+
+  const { error } = await supabase
+    .from("site_content")
+    .upsert({ key: "daily", data, updated_at: new Date().toISOString() });
+
+  if (error) {
+    return {
+      message: `저장 실패: ${error.message} (supabase/schema.sql 을 SQL Editor 에서 실행했는지 확인하세요)`,
     };
   }
 

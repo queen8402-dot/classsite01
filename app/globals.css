@@ -17,37 +17,57 @@
    - muted-foreground        : 흐린 글자 (설명문)
    - border                  : 테두리 선
    - radius                  : 모서리 둥글기 (0 = 각진, 1rem = 많이 둥근)
+   - tile-1 ~ tile-4         : 숙제 카드 아래 색 띠 (1번~4번 카드, 5번부터 다시 1번 색)
+   - success                 : '다 했어요' 완료 표시 색
+   - subject-1 ~ subject-4   : 맨 위 과목 카드(국어·수학·영어·과학) 아래 색 띠
 
    색은 #9a0002 같은 HEX 값으로 바꿔도 됩니다.
    ========================================================================== */
 :root {
-  --radius: 0.75rem;
+  --radius: 1.25rem;
 
-  --background: #ffffff;
-  --foreground: #111111;
+  --background: #eeeef6; /* 연한 회보라 배경 */
+  --foreground: #1f1f29;
 
   --card: #ffffff;
-  --card-foreground: #111111;
+  --card-foreground: #1f1f29;
   --popover: #ffffff;
-  --popover-foreground: #111111;
+  --popover-foreground: #1f1f29;
 
-  --primary: #111111;
+  --primary: #ff2d78; /* 진한 분홍 포인트 */
   --primary-foreground: #ffffff;
 
-  --secondary: #f4f4f5;
-  --secondary-foreground: #111111;
+  --secondary: #fff0f6;
+  --secondary-foreground: #c2185b;
 
-  --muted: #f4f4f5;
-  --muted-foreground: #6b6b6b;
+  --muted: #f5f5fa;
+  --muted-foreground: #6b6b7b;
 
-  --accent: #f4f4f5;
-  --accent-foreground: #111111;
+  --accent: #fff3c4; /* 연한 노랑 (캐릭터 배경) */
+  --accent-foreground: #1f1f29;
 
   --destructive: #dc2626;
 
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #a3a3a3;
+  --border: #e3e3ee;
+  --input: #e3e3ee;
+  --ring: #ff8fb6;
+
+  /* 숙제 카드 색 띠 */
+  --tile-1: #2f80ed; /* 파랑 */
+  --tile-2: #1f4f8f; /* 남색 */
+  --tile-3: #e53935; /* 빨강 */
+  --tile-4: #8e44ad; /* 보라 */
+  --tile-foreground: #ffffff;
+
+  --success: #16a34a; /* 완료 초록 */
+  --success-foreground: #ffffff;
+
+  /* 과목 카드 색 띠 */
+  --subject-1: #7cb518; /* 연두 (국어) */
+  --subject-2: #e53935; /* 빨강 (수학) */
+  --subject-3: #9c27b0; /* 보라 (영어) */
+  --subject-4: #e91e63; /* 분홍 (과학) */
+  --subject-foreground: #ffffff;
 
   /* 폰트 */
   --font-body: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -96,6 +116,18 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-tile-1: var(--tile-1);
+  --color-tile-2: var(--tile-2);
+  --color-tile-3: var(--tile-3);
+  --color-tile-4: var(--tile-4);
+  --color-tile-foreground: var(--tile-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-subject-1: var(--subject-1);
+  --color-subject-2: var(--subject-2);
+  --color-subject-3: var(--subject-3);
+  --color-subject-4: var(--subject-4);
+  --color-subject-foreground: var(--subject-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

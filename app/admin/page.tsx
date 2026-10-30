@@ -5,21 +5,21 @@ import { ArrowLeft, EyeOff } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { isAdmin, isAdminPasswordSet } from "@/lib/admin-auth";
 import { getAdminClient } from "@/lib/supabase-admin";
-import { getHeroText } from "@/lib/data";
+import { getDailyText } from "@/lib/data";
 import type { Item } from "@/lib/types";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { logout } from "./actions";
 import { LoginForm } from "./_components/login-form";
 import { ItemForm } from "./_components/item-form";
-import { HeroForm } from "./_components/hero-form";
+import { DailyForm } from "./_components/daily-form";
 import { DeleteButton } from "./_components/delete-button";
 
 /* 관리자 페이지 (주소: /admin)
    1) 비밀번호가 설정 안 됐으면 → 설정 안내
    2) 로그인 안 했으면 → 로그인 화면
    3) Supabase 연결 안 됐으면 → 연결 안내
-   4) 모두 준비됐으면 → 히어로 문구 수정 / 섹션별 카드(항목) 관리 */
+   4) 모두 준비됐으면 → 첫 화면 꾸미기 / 섹션별 카드(항목) 관리 */
 
 export const metadata = { title: "관리자" };
 
@@ -77,7 +77,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
   const sections = siteConfig.adminSections;
   const requested = typeof searchParams.section === "string" ? searchParams.section : undefined;
-  const isHeroTab = requested === "hero";
+  const isHomeTab = requested === "home";
   const current = sections.find((s) => s.key === requested) ?? sections[0];
 
   const topBar = (
@@ -99,17 +99,17 @@ export default async function AdminPage(props: PageProps<"/admin">) {
         </form>
       </div>
 
-      {/* 탭: 히어로 문구 + site.config.ts 의 adminSections */}
+      {/* 탭: 첫 화면 꾸미기 + site.config.ts 의 adminSections */}
       <nav className="mt-8 flex flex-wrap gap-2">
-        <Button asChild size="sm" variant={isHeroTab ? "default" : "outline"}>
-          <Link href="/admin?section=hero">히어로 문구</Link>
+        <Button asChild size="sm" variant={isHomeTab ? "default" : "outline"}>
+          <Link href="/admin?section=home">첫 화면 꾸미기</Link>
         </Button>
         {sections.map((s) => (
           <Button
             key={s.key}
             asChild
             size="sm"
-            variant={!isHeroTab && s.key === current.key ? "default" : "outline"}
+            variant={!isHomeTab && s.key === current.key ? "default" : "outline"}
           >
             <Link href={`/admin?section=${s.key}`}>{s.label}</Link>
           </Button>
@@ -118,18 +118,19 @@ export default async function AdminPage(props: PageProps<"/admin">) {
     </>
   );
 
-  /* 히어로 문구 탭 */
-  if (isHeroTab) {
-    const heroText = await getHeroText();
+  /* 첫 화면 꾸미기 탭 (학생 정보 · 과목 카드 · 큰 제목) */
+  if (isHomeTab) {
+    const dailyText = await getDailyText();
     return (
       <Container className="py-10">
         {topBar}
-        <section className="mt-8 max-w-2xl rounded-xl border p-6">
-          <h2 className="text-lg font-semibold">히어로 문구</h2>
-          <p className="mb-5 mt-1 text-sm text-muted-foreground">
-            사이트 첫 화면의 글자입니다. 칸을 비워 두고 저장하면 기본 글자(site.config.ts)가 보여요.
+        <section className="mt-8 max-w-3xl rounded-xl border p-6">
+          <h2 className="text-lg font-semibold">첫 화면 꾸미기</h2>
+          <p className="mb-6 mt-1 text-sm text-muted-foreground">
+            사이트 첫 화면의 글자와 과목 링크입니다. 칸을 비워 두고 저장하면 기본 글자(site.config.ts)가
+            보여요. 숙제 카드는 &lsquo;오늘의 숙제&rsquo; 탭에서 관리해요.
           </p>
-          <HeroForm text={heroText} />
+          <DailyForm text={dailyText} />
         </section>
       </Container>
     );

@@ -1,6 +1,68 @@
 import { sampleItems, siteConfig } from "@/site.config";
 import { getPublicClient } from "@/lib/supabase";
-import type { HeroText, Item } from "@/lib/types";
+import type { DailyText, HeroText, Item, SubjectCard } from "@/lib/types";
+
+/** site.config.ts 에 적힌 데일리 학습 첫 화면 글자 (기본값) */
+export const defaultDailyText: DailyText = {
+  studentName: siteConfig.daily.student.name,
+  studentGrade: siteConfig.daily.student.grade,
+  studentAvatar: siteConfig.daily.student.avatar,
+  subjectsTitle: siteConfig.daily.subjectsTitle,
+  subjects: siteConfig.daily.subjects.map((s) => ({ ...s })),
+  titleBefore: siteConfig.daily.title.before,
+  titleHighlight: siteConfig.daily.title.highlight,
+  titleAfter: siteConfig.daily.title.after,
+};
+
+const filled = (v: unknown): v is string => typeof v === "string" && v.trim() !== "";
+
+/**
+ * 데일리 학습 첫 화면 글자를 가져옵니다.
+ * - 관리자 페이지(첫 화면 꾸미기)에서 저장한 글자가 있으면 그것을,
+ *   없거나 비어 있으면 site.config.ts 의 글자를 씀
+ * - 과목 링크(href)는 비워서 저장하면 '링크 없음'으로 봄
+ */
+export async function getDailyText(): Promise<DailyText> {
+  const supabase = getPublicClient();
+  if (!supabase) return defaultDailyText;
+
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("data")
+    .eq("key", "daily")
+    .maybeSingle();
+
+  if (error) {
+    console.error("[getDailyText] Supabase 읽기 실패:", error.message);
+    return defaultDailyText;
+  }
+
+  const saved = (data?.data ?? {}) as Partial<Record<keyof DailyText, unknown>>;
+  const pick = (k: Exclude<keyof DailyText, "subjects">) =>
+    filled(saved[k]) ? saved[k] : defaultDailyText[k];
+  const savedSubjects = Array.isArray(saved.subjects)
+    ? (saved.subjects as Partial<Record<keyof SubjectCard, unknown>>[])
+    : [];
+
+  return {
+    studentName: pick("studentName"),
+    studentGrade: pick("studentGrade"),
+    studentAvatar: pick("studentAvatar"),
+    subjectsTitle: pick("subjectsTitle"),
+    subjects: defaultDailyText.subjects.map((base, i) => {
+      const s = savedSubjects[i] ?? {};
+      return {
+        label: filled(s.label) ? s.label : base.label,
+        caption: filled(s.caption) ? s.caption : base.caption,
+        emoji: filled(s.emoji) ? s.emoji : base.emoji,
+        href: typeof s.href === "string" ? s.href : base.href,
+      };
+    }),
+    titleBefore: pick("titleBefore"),
+    titleHighlight: pick("titleHighlight"),
+    titleAfter: pick("titleAfter"),
+  };
+}
 
 /** site.config.ts 에 적힌 히어로 글자 (기본값) */
 export const defaultHeroText: HeroText = {

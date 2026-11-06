@@ -1,12 +1,35 @@
 import { sampleItems, siteConfig } from "@/site.config";
 import { getPublicClient } from "@/lib/supabase";
 import type { DailyText, HeroText, Item, SubjectCard } from "@/lib/types";
+import { cleanWeeklyPlan, emptyWeeklyPlan, type WeeklyPlan } from "@/lib/week";
+
+/**
+ * 요일별 숙제(월~금)를 가져옵니다. 관리자 페이지(/admin → 요일별 숙제)에서 저장한 값.
+ * 저장된 게 없거나 Supabase가 연결 안 됐으면 모든 요일이 비어 있음
+ */
+export async function getWeeklyPlan(): Promise<WeeklyPlan> {
+  const supabase = getPublicClient();
+  if (!supabase) return emptyWeeklyPlan();
+
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("data")
+    .eq("key", "weekly")
+    .maybeSingle();
+
+  if (error) {
+    console.error("[getWeeklyPlan] Supabase 읽기 실패:", error.message);
+    return emptyWeeklyPlan();
+  }
+  return cleanWeeklyPlan(data?.data);
+}
 
 /** site.config.ts 에 적힌 데일리 학습 첫 화면 글자 (기본값) */
 export const defaultDailyText: DailyText = {
   studentName: siteConfig.daily.student.name,
   studentGrade: siteConfig.daily.student.grade,
   studentAvatar: siteConfig.daily.student.avatar,
+  studentPhotoUrl: "",
   subjectsTitle: siteConfig.daily.subjectsTitle,
   subjects: siteConfig.daily.subjects.map((s) => ({ ...s })),
   titleBefore: siteConfig.daily.title.before,
@@ -38,7 +61,7 @@ export async function getDailyText(): Promise<DailyText> {
   }
 
   const saved = (data?.data ?? {}) as Partial<Record<keyof DailyText, unknown>>;
-  const pick = (k: Exclude<keyof DailyText, "subjects">) =>
+  const pick = (k: Exclude<keyof DailyText, "subjects" | "studentPhotoUrl">) =>
     filled(saved[k]) ? saved[k] : defaultDailyText[k];
   const savedSubjects = Array.isArray(saved.subjects)
     ? (saved.subjects as Partial<Record<keyof SubjectCard, unknown>>[])
@@ -48,6 +71,7 @@ export async function getDailyText(): Promise<DailyText> {
     studentName: pick("studentName"),
     studentGrade: pick("studentGrade"),
     studentAvatar: pick("studentAvatar"),
+    studentPhotoUrl: typeof saved.studentPhotoUrl === "string" ? saved.studentPhotoUrl : "",
     subjectsTitle: pick("subjectsTitle"),
     subjects: defaultDailyText.subjects.map((base, i) => {
       const s = savedSubjects[i] ?? {};

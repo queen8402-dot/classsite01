@@ -7,9 +7,12 @@ import { Check, ExternalLink } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import type { Item } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { award } from "@/lib/game";
 
-/* 숙제 카드 목록 + 오늘 진행 막대.
-   - '다 했어요' 기록은 이 기기의 브라우저에만 저장되고, 날짜가 바뀌면 새로 시작 */
+/* (예전 모양) 숙제 카드 목록 + 오늘 진행 막대.
+   - 지금 첫 화면은 homework-map.tsx(모험 지도)를 씀. 되돌리려면 app/page.tsx 에서 바꿔 끼우기
+   - '다 했어요' 기록은 이 기기의 브라우저에만 저장되고, 날짜가 바뀌면 새로 시작
+   - 기록 저장소(useHomeworkDoneIds, setHomeworkDone)는 모험 지도에서도 같이 씀 */
 
 const tileColors = ["bg-tile-1", "bg-tile-2", "bg-tile-3", "bg-tile-4"];
 const fallbackEmojis = ["✏️", "📘", "🎧", "📚"];
@@ -61,6 +64,18 @@ function parseIds(raw: string): string[] {
   }
 }
 
+/** 숙제 완료 / 다시 하기. 완료하면 코인 (같은 숙제는 하루 한 번만)
+    reward 를 주면 그 코인·문구로 (예: 영상 숙제는 더 많이) */
+export function setHomeworkDone(id: string, done: boolean, reward?: { amount: number; label: string }) {
+  const ids = parseIds(readDone());
+  if (done === ids.includes(id)) return;
+  writeDone(done ? [...ids, id] : ids.filter((d) => d !== id));
+  if (done) {
+    const { coins, homeworkReward } = siteConfig.daily.game;
+    award(`homework:${id}`, reward?.amount ?? coins.homework, reward?.label ?? homeworkReward);
+  }
+}
+
 /** 오늘 '다 했어요' 누른 숙제 번호 목록 (다른 화면 조각에서도 씀) */
 export function useHomeworkDoneIds(): string[] {
   return parseIds(useSyncExternalStore(subscribe, readDone, () => "[]"));
@@ -76,7 +91,7 @@ export function HomeworkCards({ items }: { items: Item[] }) {
   const finished = items.length > 0 && doneCount === items.length;
 
   function toggle(id: string) {
-    writeDone(doneIds.includes(id) ? doneIds.filter((d) => d !== id) : [...doneIds, id]);
+    setHomeworkDone(id, !doneIds.includes(id));
   }
 
   if (items.length === 0) {

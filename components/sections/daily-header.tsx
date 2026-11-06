@@ -4,14 +4,16 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { ChevronRight, Clock } from "lucide-react";
 
 import { siteConfig } from "@/site.config";
-import type { DailyText, Item, SubjectCard } from "@/lib/types";
-import { useHomeworkDoneIds } from "@/components/sections/homework-cards";
-import { isSubjectTodo, useSubjectDoneRaw } from "@/components/sections/subject-cards";
+import type { DailyText } from "@/lib/types";
+import type { WeeklyPlan } from "@/lib/week";
+import { completeDay } from "@/lib/game";
+import { useTodayTasks } from "@/components/sections/today-tasks";
 
 /* 데일리 학습 화면 맨 위: 오늘 날짜 · 날씨 · 시계 + 큰 제목.
    - 날짜·시계는 보는 사람의 기기 시간으로 표시
    - 날씨: site.config.ts 의 daily.weather 위치 (Open-Meteo 무료 날씨 정보)
-   - 큰 제목 분홍 칸: '할일 N개' = 오늘 아직 안 끝낸 숙제 + 아직 도장 못 받은 과목 영상 */
+   - 큰 제목 분홍 칸: '할일 N개' = 오늘 요일 숙제(관리자 → 요일별 숙제) 중 아직 안 끝낸 것
+   - 토·일요일에는 '쉬는 날' 제목 */
 
 /* ---------- 시계 (1초마다 다시 그림) ---------- */
 
@@ -84,24 +86,23 @@ type Title = Pick<DailyText, "titleBefore" | "titleHighlight" | "titleAfter">;
 
 export function DailyHeader({
   title,
-  homework,
-  subjects,
+  weekly,
 }: {
   title: Title;
-  homework: Item[];
-  subjects: SubjectCard[];
+  weekly: WeeklyPlan;
 }) {
   const now = useSyncExternalStore(subscribeClock, nowText, () => null);
   const [today, time] = now ? now.split("|") : [null, null];
   const weather = useWeather();
 
-  const homeworkDone = useHomeworkDoneIds();
-  const subjectRaw = useSubjectDoneRaw();
-  const remaining =
-    homework.filter((item) => !homeworkDone.includes(item.id)).length +
-    subjects.filter((subject) => isSubjectTodo(subject, subjectRaw)).length;
-  const total = homework.length + subjects.filter((s) => isSubjectTodo(s, "[]")).length;
-  const allDone = total > 0 && remaining === 0;
+  const { day, tasks } = useTodayTasks(weekly);
+  const remaining = tasks.filter((t) => !t.done).length;
+  const allDone = tasks.length > 0 && remaining === 0;
+
+  // 오늘 할일을 전부 끝내면 보너스 코인 + 연속 성공 기록 (하루 한 번)
+  useEffect(() => {
+    if (allDone) completeDay();
+  }, [allDone]);
 
   const chip = "inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-sm font-semibold shadow-sm";
 
@@ -125,7 +126,9 @@ export function DailyHeader({
       </div>
 
       <h1 className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-3xl font-bold tracking-tight sm:text-4xl">
-        {allDone ? (
+        {day === "weekend" ? (
+          <span>{siteConfig.daily.game.restDay}</span>
+        ) : allDone ? (
           <span>{siteConfig.daily.allDoneTitle}</span>
         ) : (
           <>

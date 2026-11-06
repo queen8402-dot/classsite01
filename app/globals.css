@@ -20,6 +20,9 @@
    - tile-1 ~ tile-4         : 숙제 카드 아래 색 띠 (1번~4번 카드, 5번부터 다시 1번 색)
    - success                 : '다 했어요' 완료 표시 색
    - subject-1 ~ subject-4   : 맨 위 과목 카드(국어·수학·영어·과학) 아래 색 띠
+   - gold                    : 코인·금색 테두리
+   - avatar-sky/mint/purple  : 상점에서 사는 캐릭터 배경 색
+   - map-*                   : 섬 모험 지도 그림 색 (바다·풀·절벽·길·나무·지붕)
 
    색은 #9a0002 같은 HEX 값으로 바꿔도 됩니다.
    ========================================================================== */
@@ -68,6 +71,27 @@
   --subject-3: #9c27b0; /* 보라 (영어) */
   --subject-4: #e91e63; /* 분홍 (과학) */
   --subject-foreground: #ffffff;
+
+  /* 게임 (코인 · 캐릭터 꾸미기) */
+  --gold: #f5b700;
+  --avatar-sky: #cfe8ff;
+  --avatar-mint: #c9f2e3;
+  --avatar-purple: #e6d5ff;
+
+  /* 섬 모험 지도 */
+  --map-water: #4fb3e8;
+  --map-water-light: #8fd3f5;
+  --map-grass: #8bc94a;
+  --map-grass-dark: #5f9e2f;
+  --map-cliff: #b77a43;
+  --map-cliff-dark: #8a5528;
+  --map-path: #f1d9a8;
+  --map-path-edge: #d4b27a;
+  --map-tree: #3f8f3a;
+  --map-trunk: #7a4b25;
+  --map-roof: #d9773b;
+  --map-wall: #f4e3c3;
+  --map-rock: #a7a9b4;
 
   /* 폰트 */
   --font-body: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -128,6 +152,10 @@
   --color-subject-3: var(--subject-3);
   --color-subject-4: var(--subject-4);
   --color-subject-foreground: var(--subject-foreground);
+  --color-gold: var(--gold);
+  --color-avatar-sky: var(--avatar-sky);
+  --color-avatar-mint: var(--avatar-mint);
+  --color-avatar-purple: var(--avatar-purple);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -151,5 +179,178 @@
   h2,
   h3 {
     font-family: var(--font-display);
+  }
+}
+
+/* ==========================================================================
+   ★ 게임 효과 (코인 받기, 색종이, 캐릭터 콩콩, 꾸미기 테두리)
+   ========================================================================== */
+
+/* 상점 배경: 무지개 */
+.avatar-rainbow {
+  background: linear-gradient(135deg, var(--avatar-sky), var(--avatar-mint), var(--accent), var(--avatar-purple));
+}
+
+/* 상점 테두리: 금색 */
+.avatar-frame-gold {
+  box-shadow: 0 0 0 3px var(--gold);
+}
+
+/* 상점 테두리: 반짝이 (빙글빙글 도는 무지개 고리) */
+.avatar-frame-sparkle::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: 9999px;
+  background: conic-gradient(var(--primary), var(--gold), var(--tile-1), var(--subject-1), var(--primary));
+  animation: spin-slow 3s linear infinite;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 색종이 조각: --dx, --dy 만큼 날아가며 사라짐 */
+.confetti-piece {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 10px;
+  height: 14px;
+  border-radius: 3px;
+  animation: confetti-burst 1.2s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes confetti-burst {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r));
+    opacity: 0;
+  }
+}
+
+/* 코인 +10 이 위로 튀어 오름 */
+.coin-pop {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  animation: coin-pop 1.6s ease-out forwards;
+}
+
+@keyframes coin-pop {
+  0% {
+    transform: translate(-50%, 0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -10px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -90px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* 지도 위 캐릭터 콩콩 (가운데 정렬 포함) */
+.hop {
+  animation: hop 1s ease-in-out infinite;
+}
+
+@keyframes hop {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -8px);
+  }
+}
+
+/* 창이 톡 튀어나오기 */
+.pop-in {
+  animation: pop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* CLEAR! 도장 쾅 */
+.stamp-in {
+  animation: stamp-in 0.4s ease-out both;
+}
+
+@keyframes stamp-in {
+  0% {
+    transform: scale(2) rotate(-12deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(-12deg);
+    opacity: 1;
+  }
+}
+
+/* 지도 위 캐릭터가 걸을 때 통통 */
+.walking {
+  animation: walk-bob 0.32s ease-in-out infinite;
+}
+
+@keyframes walk-bob {
+  0%,
+  100% {
+    margin-top: 0;
+  }
+  50% {
+    margin-top: -6px;
+  }
+}
+
+/* Go! 말풍선 둥실 */
+.float {
+  animation: float 1.4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -5px);
+  }
+}
+
+/* 지도 육각형 배지 */
+.hexagon {
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+}
+
+/* 움직임 줄이기를 켠 기기에서는 애니메이션을 거의 멈춤 */
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece,
+  .coin-pop,
+  .hop,
+  .pop-in,
+  .stamp-in,
+  .walking,
+  .float,
+  .avatar-frame-sparkle::before {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
   }
 }

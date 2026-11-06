@@ -12,7 +12,10 @@ export type SubjectCard = {
 export type DailyText = {
   studentName: string;
   studentGrade: string;
+  /** 캐릭터 이모지 (사진이 없을 때 보임) */
   studentAvatar: string;
+  /** 프로필 사진 주소 (Supabase 저장소). 비어 있으면 캐릭터 이모지가 보임 */
+  studentPhotoUrl: string;
   subjectsTitle: string;
   subjects: SubjectCard[];
   titleBefore: string;

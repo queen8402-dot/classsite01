@@ -5,7 +5,7 @@ import { ArrowLeft, EyeOff } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { isAdmin, isAdminPasswordSet } from "@/lib/admin-auth";
 import { getAdminClient } from "@/lib/supabase-admin";
-import { getDailyText } from "@/lib/data";
+import { getDailyText, getWeeklyPlan } from "@/lib/data";
 import type { Item } from "@/lib/types";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,14 @@ import { logout } from "./actions";
 import { LoginForm } from "./_components/login-form";
 import { ItemForm } from "./_components/item-form";
 import { DailyForm } from "./_components/daily-form";
+import { WeeklyForm } from "./_components/weekly-form";
 import { DeleteButton } from "./_components/delete-button";
 
 /* 관리자 페이지 (주소: /admin)
    1) 비밀번호가 설정 안 됐으면 → 설정 안내
    2) 로그인 안 했으면 → 로그인 화면
    3) Supabase 연결 안 됐으면 → 연결 안내
-   4) 모두 준비됐으면 → 첫 화면 꾸미기 / 섹션별 카드(항목) 관리 */
+   4) 모두 준비됐으면 → 요일별 숙제(처음 탭) / 첫 화면 꾸미기 / 섹션별 카드(항목) 관리 */
 
 export const metadata = { title: "관리자" };
 
@@ -77,6 +78,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
   const sections = siteConfig.adminSections;
   const requested = typeof searchParams.section === "string" ? searchParams.section : undefined;
+  const isWeeklyTab = requested === undefined || requested === "weekly";
   const isHomeTab = requested === "home";
   const current = sections.find((s) => s.key === requested) ?? sections[0];
 
@@ -101,6 +103,9 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
       {/* 탭: 첫 화면 꾸미기 + site.config.ts 의 adminSections */}
       <nav className="mt-8 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant={isWeeklyTab ? "default" : "outline"}>
+          <Link href="/admin?section=weekly">📅 요일별 숙제</Link>
+        </Button>
         <Button asChild size="sm" variant={isHomeTab ? "default" : "outline"}>
           <Link href="/admin?section=home">첫 화면 꾸미기</Link>
         </Button>
@@ -109,7 +114,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
             key={s.key}
             asChild
             size="sm"
-            variant={!isHomeTab && s.key === current.key ? "default" : "outline"}
+            variant={!isHomeTab && !isWeeklyTab && s.key === current.key ? "default" : "outline"}
           >
             <Link href={`/admin?section=${s.key}`}>{s.label}</Link>
           </Button>
@@ -117,6 +122,23 @@ export default async function AdminPage(props: PageProps<"/admin">) {
       </nav>
     </>
   );
+
+  /* 요일별 숙제 탭 (월~금) */
+  if (isWeeklyTab) {
+    const plan = await getWeeklyPlan();
+    return (
+      <Container className="py-10">
+        {topBar}
+        <section className="mt-8 max-w-4xl rounded-xl border p-6">
+          <h2 className="text-lg font-semibold">📅 요일별 숙제</h2>
+          <p className="mb-6 mt-1 text-sm text-muted-foreground">
+            요일마다 학생이 할 숙제를 넣어요. 학생 화면에는 오늘 요일의 숙제만 보이고, 토·일요일은 쉬는 날로 나와요.
+          </p>
+          <WeeklyForm plan={plan} />
+        </section>
+      </Container>
+    );
+  }
 
   /* 첫 화면 꾸미기 탭 (학생 정보 · 과목 카드 · 큰 제목) */
   if (isHomeTab) {

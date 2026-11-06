@@ -1,14 +1,18 @@
-import { getDailyText, getItems } from "@/lib/data";
+import { getDailyText, getWeeklyPlan } from "@/lib/data";
 import { Container } from "@/components/layout/container";
 import { DailySidebar } from "@/components/sections/daily-sidebar";
 import { DailyHeader } from "@/components/sections/daily-header";
 import { SubjectCards } from "@/components/sections/subject-cards";
-import { HomeworkCards } from "@/components/sections/homework-cards";
+import { TodayBoard } from "@/components/sections/today-board";
+import { RewardLayer } from "@/components/sections/reward-layer";
 
 /* 메인 페이지 = 데일리 학습 화면 (왼쪽 메뉴 + 오늘 날짜·날씨·시계/제목 + 과목 카드 + 오늘의 숙제 카드)
    - 학생 정보·과목 카드·큰 제목: 관리자 페이지(/admin → 첫 화면 꾸미기)
      (저장한 글자가 없으면 site.config.ts 의 daily 글자가 보임)
-   - 숙제 카드: 관리자 페이지(/admin → 오늘의 숙제)
+   - 오늘의 할일 판(TodayBoard): 관리자 → 요일별 숙제 의 오늘 요일 숙제. 누르면 섬 모험 지도
+     이전 모양으로 되돌리려면 TodayBoard 를 HomeworkMap(homework-map.tsx) 또는
+     HomeworkCards(homework-cards.tsx)로 바꾸고, 과목 카드를 그 위로 옮기기
+   - 코인·보상 연출: RewardLayer, 꾸미기 상점: 왼쪽 메뉴 프로필
 
    예전 화면(히어로·소개·기능·연락처)으로 되돌리려면 아래 HomePage 를 이것으로 바꾸세요.
    (파일은 components/sections, components/layout 에 그대로 남아 있습니다)
@@ -26,18 +30,19 @@ import { HomeworkCards } from "@/components/sections/homework-cards";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [daily, homework] = await Promise.all([getDailyText(), getItems("homework")]);
+  const [daily, weekly] = await Promise.all([getDailyText(), getWeeklyPlan()]);
 
   return (
     <div className="flex flex-1 flex-col lg:flex-row">
       <DailySidebar student={daily} />
       <main className="flex-1">
         <Container className="grid gap-8 py-8 sm:py-12">
-          <DailyHeader title={daily} homework={homework} subjects={daily.subjects} />
+          <DailyHeader title={daily} weekly={weekly} />
+          <TodayBoard weekly={weekly} daily={daily} />
           <SubjectCards subjectsTitle={daily.subjectsTitle} subjects={daily.subjects} />
-          <HomeworkCards items={homework} />
         </Container>
       </main>
+      <RewardLayer />
     </div>
   );
 }

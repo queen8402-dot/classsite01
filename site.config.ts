@@ -67,6 +67,54 @@ export const siteConfig = {
       skipped: "건너뛴 부분이 있어요. 처음부터 끝까지 보면 도장을 받을 수 있어요.",
       close: "닫기",
     },
+
+    /* 게임 (코인 보상 · 모험 지도 · 꾸미기 상점) */
+    game: {
+      /* 받는 코인 개수 */
+      coins: { homework: 10, video: 20, allDone: 30, streak3: 50, streak7: 100 },
+      mapTitle: "오늘의 모험",
+      stage: "STAGE",
+      clear: "CLEAR!",
+      homeworkReward: "숙제 완료!",
+      videoReward: "영상 완료!",
+      dayCompleteTitle: "오늘의 모험 완료! 🎉",
+      streakText: "일 연속 성공!",
+      ok: "좋아요!",
+      shopTitle: "꾸미기 상점",
+      notEnough: "코인이 부족해요",
+      bought: "새 아이템을 샀어요! 🎉",
+      /* 오늘의 할일 판 · 섬 모험 지도 */
+      boardTitle: "오늘의 할일",
+      openMap: "모험 지도 열기",
+      mapStart: "출발",
+      mapTreasure: "보물섬",
+      go: "Go!",
+      startButton: "시작하기",
+      watchButton: "영상 보기",
+      noLink: "선생님이 아직 링크를 안 넣었어요",
+      pickHint: "지도에서 할일을 눌러 출발해요!",
+      todo: "할 차례",
+      cleared: "클리어",
+      videoTask: "영상 끝까지 보기",
+      restDay: "오늘은 쉬는 날이에요! 🎉",
+      restHint: "주말에는 푹 쉬고, 월요일에 새 모험을 떠나요.",
+      /* 상점 아이템 — slot: hat(모자) / acc(소품) / bg(배경) / frame(테두리)
+         배경·테두리 색은 app/globals.css 의 avatar-*, gold 에서 바꿈 */
+      items: [
+        { id: "hat-ribbon", slot: "hat", label: "리본", emoji: "🎀", price: 30 },
+        { id: "hat-cap", slot: "hat", label: "모자", emoji: "🧢", price: 50 },
+        { id: "hat-crown", slot: "hat", label: "왕관", emoji: "👑", price: 150 },
+        { id: "acc-star", slot: "acc", label: "별 스티커", emoji: "⭐", price: 25 },
+        { id: "acc-glasses", slot: "acc", label: "선글라스", emoji: "🕶️", price: 40 },
+        { id: "acc-headphones", slot: "acc", label: "헤드폰", emoji: "🎧", price: 60 },
+        { id: "bg-sky", slot: "bg", label: "하늘 배경", emoji: "", price: 20 },
+        { id: "bg-mint", slot: "bg", label: "민트 배경", emoji: "", price: 20 },
+        { id: "bg-purple", slot: "bg", label: "보라 배경", emoji: "", price: 30 },
+        { id: "bg-rainbow", slot: "bg", label: "무지개 배경", emoji: "", price: 80 },
+        { id: "frame-gold", slot: "frame", label: "금색 테두리", emoji: "", price: 70 },
+        { id: "frame-sparkle", slot: "frame", label: "반짝이 테두리", emoji: "", price: 120 },
+      ],
+    },
   },
 
   /* 첫 화면(히어로) */
@@ -117,10 +165,9 @@ export const siteConfig = {
      key  = 데이터베이스에 저장되는 이름(영문 소문자),
      label = 관리자 화면에 보이는 이름.
      예) 포트폴리오라면 { key: "works", label: "작업물" } 을 추가 */
-  adminSections: [
-    { key: "homework", label: "오늘의 숙제" },
-    { key: "features", label: "기능" },
-  ],
+  /* (요일별 숙제는 관리자 페이지의 '📅 요일별 숙제' 탭에서 따로 관리)
+     예전 '오늘의 숙제' 탭을 다시 쓰려면 { key: "homework", label: "오늘의 숙제" } 를 추가 */
+  adminSections: [{ key: "features", label: "기능" }],
 };
 
 /* Supabase를 아직 연결하지 않았을 때 대신 보여줄 예시 카드.

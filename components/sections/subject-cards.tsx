@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 
 import { siteConfig } from "@/site.config";
 import { cn } from "@/lib/utils";
+import { award } from "@/lib/game";
 import type { SubjectCard } from "@/lib/types";
 import { VideoDialog, getYouTubeId } from "@/components/sections/video-dialog";
 
@@ -65,6 +66,14 @@ function subscribe(listener: () => void) {
 
 /* 과목마다 기록 이름: 과목 이름 + 영상 번호 (영상을 바꾸면 도장도 새로) */
 const doneKey = (subject: SubjectCard, videoId: string) => `${subject.label}:${videoId}`;
+
+/** 영상을 끝까지 봤을 때: 도장 기록 + 코인 (지도 화면에서도 씀) */
+export function markVideoWatched(subject: SubjectCard, videoId: string) {
+  const key = doneKey(subject, videoId);
+  addDone(key);
+  const { coins, videoReward } = siteConfig.daily.game;
+  award(`video:${key}`, coins.video, `${subject.label} ${videoReward}`);
+}
 
 /** 오늘 영상 도장 기록 (다른 화면 조각에서도 씀) */
 export function useSubjectDoneRaw(): string {
@@ -159,7 +168,7 @@ export function SubjectCards({
           title={openSubject.label}
           videoId={openVideoId}
           alreadyDone={raw.includes(JSON.stringify(doneKey(openSubject, openVideoId)))}
-          onComplete={() => addDone(doneKey(openSubject, openVideoId))}
+          onComplete={() => markVideoWatched(openSubject, openVideoId)}
           onClose={close}
         />
       ) : null}
